@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 from tenacity import retry, wait_fixed, stop_after_delay
 import requests
@@ -177,17 +177,32 @@ def main():
         ['taker_vol', '/takerlongshortRatio', None]
       ]
     feat_info = [dict(zip(['name', 'api_suffix', 'col_modifier'], f)) for f in feat_info]
-    end = datetime.now()
-    start = end - timedelta(days=1) # *** NB: this api only allows historical data for LAST 30 DAYS
+
+    # Define bigquery client
+    client = bigquery.Client()
+    table_id = 'sentiment_data.binance_sentiment_BTCUSDT'
+
+    # Obtain last timestamp
+    query = (
+        "SELECT max(timestamp) as last_time FROM `invictus-dev.sentiment_data.binance_sentiment`"
+    )
+    query_job = client.query(query)
+    last_time = list(query_job.result())[0].last_time
+
+    end = datetime.now(timezone.utc)
+    start = last_time + timedelta(minutes=5)
     df = fetch_data(start, feat_info, end=end, sym='BTCUSDT')
 
-    client = bigquery.Client()
-    table_id = 'sentiment_data.binance_sentiment'
-    job = client.load_table_from_dataframe(
-        df, table_id
-    )
+    print(last_time)
+    print(df)
+    print(len(df))
+    print(df.dropna())
+    print(len(df.dropna()))
+    print(df[df.isna().any(axis=1)])
 
-    job.result()
+    # job = client.load_table_from_dataframe(
+        # df, table_id
+    # )
 
 
 if __name__=='__main__':
