@@ -1,0 +1,5 @@
+pyarrow
+pandas
+google-cloud-bigquery
+tenacity
+requests
