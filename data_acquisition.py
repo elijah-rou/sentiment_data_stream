@@ -180,29 +180,37 @@ def main():
 
     # Define bigquery client
     client = bigquery.Client()
-    table_id = 'sentiment_data.binance_sentiment_BTCUSDT'
-
-    # Obtain last timestamp
-    query = (
-        "SELECT max(timestamp) as last_time FROM `invictus-dev.sentiment_data.binance_sentiment`"
-    )
-    query_job = client.query(query)
-    last_time = list(query_job.result())[0].last_time
-
+    symbols = ["BTCUSDT", "ETHUSDT", "BCHUSDT", "XRPUSDT"]
     end = datetime.now(timezone.utc)
-    start = last_time + timedelta(minutes=5)
-    df = fetch_data(start, feat_info, end=end, sym='BTCUSDT')
 
-    print(last_time)
-    print(df)
-    print(len(df))
-    print(df.dropna())
-    print(len(df.dropna()))
-    print(df[df.isna().any(axis=1)])
+    for s in symbols:
+        table_id = f'sentiment_data.binance_sentiment_{s}'
 
-    # job = client.load_table_from_dataframe(
-        # df, table_id
-    # )
+        # Obtain last timestamp
+        query = (
+            f"SELECT max(timestamp) as last_time FROM `invictus-dev.sentiment_data.binance_sentiment_{s}`"
+        )
+        query_job = client.query(query)
+        result = list(query_job.result())
+        # If there is a result use it, else just take previous 30 days
+        if result:
+            last_time = result[0].last_time
+        else:
+            last_time = end - timedelta(days=30, minutes=5)
+
+        start = last_time + timedelta(minutes=5)
+        df = fetch_data(start, feat_info, end=end, sym=s)
+
+        print(last_time)
+        print(df)
+        print(len(df))
+        print(df.dropna())
+        print(len(df.dropna()))
+        print(df[df.isna().any(axis=1)])
+
+        # job = client.load_table_from_dataframe(
+            # df, table_id
+        # )
 
 
 if __name__=='__main__':
