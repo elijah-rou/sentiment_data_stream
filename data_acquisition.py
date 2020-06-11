@@ -201,16 +201,10 @@ def main():
         start = last_time + timedelta(minutes=5)
         df = fetch_data(start, feat_info, end=end, sym=s)
 
-        print(last_time)
-        print(df)
-        print(len(df))
-        print(df.dropna())
-        print(len(df.dropna()))
-        print(df[df.isna().any(axis=1)])
-
-        # job = client.load_table_from_dataframe(
-            # df, table_id
-        # )
+        job = client.load_table_from_dataframe(
+            df, table_id
+        )
+        job.result()
 
 
 if __name__=='__main__':
